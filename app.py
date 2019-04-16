@@ -1,6 +1,5 @@
 #!flask/bin/python
 
-#from flask import Flask, jsonify, abort, make_response, request, send_from_directory
 import os
 import cv2 as cv
 from flask import Flask, request, redirect, url_for, flash, send_from_directory, jsonify
@@ -11,98 +10,108 @@ from keras.applications import ResNet50
 from PIL import Image
 import numpy as np
 import io
-from keras import backend as K
 import tensorflow as tf
 import keras
+from keras import backend as K
+
 
 #metrics
 
 def precision(y_true, y_pred):
-        """Precision metric.
+  """Precision metric.
 
-        Only computes a batch-wise average of precision.
+  Only computes a batch-wise average of precision.
 
-        Computes the precision, a metric for multi-label classification of
-        how many selected items are relevant.
-        """
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-        precision = true_positives / (predicted_positives + K.epsilon())
-        return precision
+  Computes the precision, a metric for multi-label classification of
+  how many selected items are relevant.
+  """
+  true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+  predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+  precision = true_positives / (predicted_positives + K.epsilon())
+  return precision
 
 def recall(y_true, y_pred):
-        """Recall metric.
+  """Recall metric.
 
-        Only computes a batch-wise average of recall.
+  Only computes a batch-wise average of recall.
 
-        Computes the recall, a metric for multi-label classification of
-        how many relevant items are selected.
-        """
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-        recall = true_positives / (possible_positives + K.epsilon())
-        return recall
+  Computes the recall, a metric for multi-label classification of
+  how many relevant items are selected.
+  """
+  true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+  possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+  recall = true_positives / (possible_positives + K.epsilon())
+  return recall
 
 def f1(y_true, y_pred):
-    def recall(y_true, y_pred):
-        """Recall metric.
+  def recall(y_true, y_pred):
+      """Recall metric.
 
-        Only computes a batch-wise average of recall.
+      Only computes a batch-wise average of recall.
 
-        Computes the recall, a metric for multi-label classification of
-        how many relevant items are selected.
-        """
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-        recall = true_positives / (possible_positives + K.epsilon())
-        return recall
+      Computes the recall, a metric for multi-label classification of
+      how many relevant items are selected.
+      """
+      true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+      possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+      recall = true_positives / (possible_positives + K.epsilon())
+      return recall
 
-    def precision(y_true, y_pred):
-        """Precision metric.
+  def precision(y_true, y_pred):
+      """Precision metric.
 
-        Only computes a batch-wise average of precision.
+      Only computes a batch-wise average of precision.
 
-        Computes the precision, a metric for multi-label classification of
-        how many selected items are relevant.
-        """
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-        precision = true_positives / (predicted_positives + K.epsilon())
-        return precision
-    precision = precision(y_true, y_pred)
-    recall = recall(y_true, y_pred)
-    return 2*((precision*recall)/(precision+recall+K.epsilon()))
+      Computes the precision, a metric for multi-label classification of
+      how many selected items are relevant.
+      """
+      true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+      predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+      precision = true_positives / (predicted_positives + K.epsilon())
+      return precision
+  precision = precision(y_true, y_pred)
+  recall = recall(y_true, y_pred)
+  return 2*((precision*recall)/(precision+recall+K.epsilon()))
 
 
 
 # load our model 
 def load_model():
+  K.clear_session()
+  tf.reset_default_graph()
+
   global model, graph
-  model = ResNet50(weights="imagenet")
-#  model = tf.keras.models.load_model('cancer_classifier.h5', custom_objects={'recall': recall, 'precision':precision,'f1':f1}, compile=True)
+#  model = ResNet50(weights="imagenet")
+
+  model = tf.keras.models.load_model('cancer_classifier.h5', custom_objects={'recall': recall, 'precision':precision,'f1':f1}, compile=True)
   graph = tf.get_default_graph()
+
+#  return model, graph
 
 
 
 def prepare_image(image, target):
-#      image = image.convert('L').resize(target)
-#      x = img_to_array(image)
-#      x = np.array([x])
-#      
-#      return x
+  # convert numpy array to image
+  image = cv.imdecode(image, cv.IMREAD_GRAYSCALE)
+#  image = cv.imread(image, cv.IMREAD_GRAYSCALE)
+  image = cv.resize(image,target)
+  image = image/255.0
+  image = image.reshape(1,150,150,-1)
   
-    # if the image mode is not RGB, convert it
-    if image.mode != "RGB":
-        image = image.convert("RGB")
-
-    # resize the input image and preprocess it
-    image = image.resize(target)
-    image = img_to_array(image)
-    image = np.expand_dims(image, axis=0)
-    image = imagenet_utils.preprocess_input(image)
-
-    # return the processed image
-    return image
+  return image
+  
+#    # if the image mode is not RGB, convert it
+#    if image.mode != "RGB":
+#        image = image.convert("RGB")
+#
+#    # resize the input image and preprocess it
+#    image = image.resize(target)
+#    image = img_to_array(image)
+#    image = np.expand_dims(image, axis=0)
+#    image = imagenet_utils.preprocess_input(image)
+#
+#    # return the processed image
+#    return image
 
 UPLOAD_FOLDER = './image'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif', 'svg'])
@@ -117,38 +126,62 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route("/predict", methods=['GET', "POST"])
 def predict():
-    # initialize the data dictionary that will be returned from the
-    # view
-    data = {"success": False}
+  # initialize the data dictionary that will be returned from the
+  # view
+  data = {"success": False}
 
-    # ensure an image was properly uploaded to our endpoint
-    if request.method == "POST":
-        if request.files.get("image"):
-            # read the image in PIL format
-            image = request.files["image"].read()
-            image = Image.open(io.BytesIO(image))
+  # ensure an image was properly uploaded to our endpoint
+  if request.method == "POST":
+    if request.files.get("image"):
+      # read image file string data
+      file = request.files["image"].read()
+      
+      #convert string data to numpy array
+      np_image = np.fromstring(file, np.uint8)
 
-            # preprocess the image and prepare it for classification
-            image = prepare_image(image, target=(224, 224))
+      # preprocess the image and prepare it for classification
+      image = prepare_image(np_image, target=(150, 150))
 
-            # classify the input image and then initialize the list
-            # of predictions to return to the client
-            with graph.as_default():
-              preds = model.predict(image)
-              results = imagenet_utils.decode_predictions(preds)
-              data["predictions"] = []
+      
+      
+#      image = request.files["image"]
+#
+#      image.save(secure_filename(image.filename))
+#      image = prepare_image(image.filename, target=(150, 150))
 
-            # loop over the results and add them to the list of
-            # returned predictions
-            for (imagenetID, label, prob) in results[0]:
-                r = {"label": label, "probability": float(prob)}
-                data["predictions"].append(r)
 
-            # indicate that the request was a success
-            data["success"] = True
+      
+#      image = request.files["image"].read()
+#      image = Image.open(io.BytesIO(image))
 
-    # return the data dictionary as a JSON response
-    return jsonify(data)
+
+      # classify the input image and then initialize the list
+      # of predictions to return to the client
+      
+#      with graph.as_default():
+      
+      with graph.as_default():
+        with tf.Session() as sess:
+          sess.run(tf.global_variables_initializer())
+#          is_variable_initialized
+#          model._make_predict_function()
+          preds = model.predict(image, verbose=1)
+
+#      model, graph = load_model()    
+          data["predictions"] = str(preds[0][0])
+
+      # loop over the results and add them to the list of
+      # returned predictions
+#      results = imagenet_utils.decode_predictions(preds)
+#      for (imagenetID, label, prob) in results[0]:
+#          r = {"label": label, "probability": float(prob)}
+#          data["predictions"].append(r)
+
+      # indicate that the request was a success
+      data["success"] = True
+
+  # return the data dictionary as a JSON response
+  return jsonify(data)
 
 
 # if this is the main thread of execution first load the model and
@@ -156,7 +189,7 @@ def predict():
 if __name__ == "__main__":
     print(("* Loading Keras model and Flask starting server..."
         "please wait until server has fully started"))
-    load_model()    
+    load_model() 
     app.run()
 
 
