@@ -86,7 +86,7 @@ def load_model():
 #  model = ResNet50(weights="imagenet")
   
   with CustomObjectScope({'recall': recall, 'precision':precision,'f1':f1}): 
-    model = keras.models.load_model('cancer_classifier.h5')
+    model = keras.models.load_model('modelV2.h5')
 
   graph = tf.get_default_graph()
 
@@ -115,12 +115,11 @@ def prepare_image(image, target):
 #    # return the processed image
 #    return image
 
-
-UPLOAD_FOLDER = './image'
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif', 'svg'])
+#UPLOAD_FOLDER = './image'
+#ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif', 'svg'])
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+#app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route("/predict", methods=['GET', "POST"])
 def predict():
