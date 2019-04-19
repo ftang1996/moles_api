@@ -78,12 +78,6 @@ def f1(y_true, y_pred):
 # load our model 
 def load_model():
   global model, graph
-#
-#  with open('model_architecture.json', 'r') as f:
-#    model = model_from_json(f.read())
-#  model.load_weights('model_weights.h5')
-  
-#  model = ResNet50(weights="imagenet")
   
   with CustomObjectScope({'recall': recall, 'precision':precision,'f1':f1}): 
     model = keras.models.load_model('modelV2.h5')
@@ -91,35 +85,16 @@ def load_model():
   graph = tf.get_default_graph()
 
 
-
 def prepare_image(image, target):
   # convert numpy array to image
   image = cv.imdecode(image, cv.IMREAD_GRAYSCALE)
-#  image = cv.imread(image, cv.IMREAD_GRAYSCALE)
   image = cv.resize(image,target)
   image = image/255.0
   image = image.reshape(1,150,150,-1)
   
   return image
-  
-#    # if the image mode is not RGB, convert it
-#    if image.mode != "RGB":
-#        image = image.convert("RGB")
-#
-#    # resize the input image and preprocess it
-#    image = image.resize(target)
-#    image = img_to_array(image)
-#    image = np.expand_dims(image, axis=0)
-#    image = imagenet_utils.preprocess_input(image)
-#
-#    # return the processed image
-#    return image
-
-#UPLOAD_FOLDER = './image'
-#ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif', 'svg'])
 
 app = Flask(__name__)
-#app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route("/predict", methods=['GET', "POST"])
 def predict():
