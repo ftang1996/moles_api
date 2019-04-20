@@ -75,8 +75,14 @@ def f1(y_true, y_pred):
 
 
 # load our model 
+def load_model():
+  global model, graph
+  with CustomObjectScope({'recall': recall, 'precision':precision,'f1':f1}): 
+    model = keras.models.load_model('modelV2.h5')
 
+  graph = tf.get_default_graph()
   
+
 def prepare_image(image, target):
   # convert numpy array to image
   image = cv.imdecode(image, cv.IMREAD_GRAYSCALE)
@@ -87,14 +93,6 @@ def prepare_image(image, target):
   return image
 
 app = Flask(__name__)
-@app.route("/")
-def load_model():
-  global model, graph
-  with CustomObjectScope({'recall': recall, 'precision':precision,'f1':f1}): 
-    model = keras.models.load_model('modelV2.h5')
-
-  graph = tf.get_default_graph()
-
 
 @app.route("/predict", methods=['GET', "POST"])
 def predict():
@@ -130,10 +128,9 @@ def predict():
 # if this is the main thread of execution first load the model and
 # then start the server
 if __name__ == "__main__":
-    console.log(("* Loading Keras model and Flask starting server..."
+    print(("* Loading Keras model and Flask starting server..."
         "please wait until server has fully started"))
     load_model() 
-#    app.debug =True
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
 
