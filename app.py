@@ -96,32 +96,32 @@ def create_app():
   @app.route("/predict", methods=['GET', "POST"])
   def predict():
   # initialize the data dictionary that will be returned
-  data = {"success": False}
+    data = {"success": False}
 
-  # ensure an image was properly uploaded to our endpoint
-  if request.method == "POST":
-    if request.files.get("image"):
-      # read image file string data
-      file = request.files["image"].read()
+    # ensure an image was properly uploaded to our endpoint
+    if request.method == "POST":
+      if request.files.get("image"):
+        # read image file string data
+        file = request.files["image"].read()
 
-      #convert string data to numpy array
-      np_image = np.fromstring(file, np.uint8)
+        #convert string data to numpy array
+        np_image = np.fromstring(file, np.uint8)
 
-      # preprocess the image and prepare it for classification
-      image = prepare_image(np_image, target=(150, 150))
+        # preprocess the image and prepare it for classification
+        image = prepare_image(np_image, target=(150, 150))
 
-  #      model, graph = load_model()
+    #      model, graph = load_model()
 
-      # classify the input image   
-      with graph.as_default():
-        preds = model.predict(image, verbose=1)
-        data["predictions"] = str(preds[0][0])
+        # classify the input image   
+        with graph.as_default():
+          preds = model.predict(image, verbose=1)
+          data["predictions"] = str(preds[0][0])
 
-      # indicate that the request was a success
-      data["success"] = True
+        # indicate that the request was a success
+        data["success"] = True
 
-  # return the data dictionary as a JSON response
-  return jsonify(data)
+    # return the data dictionary as a JSON response
+    return jsonify(data)
 return app
 
 # if this is the main thread of execution first load the model and
