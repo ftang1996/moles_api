@@ -1,2 +1,1 @@
-web: gunicorn app:load_model/(/) app:app
-
+web: gunicorn app:create_app

@@ -92,39 +92,44 @@ def prepare_image(image, target):
   
   return image
 
-app = Flask(__name__)
+def create_app():
+  app = Flask(__name__)
+  
+  load_model()
 
-@app.route("/predict", methods=['GET', "POST"])
-def predict():
-  # initialize the data dictionary that will be returned
-  data = {"success": False}
+  @app.route("/predict", methods=['GET', "POST"])
+  def predict():
+    # initialize the data dictionary that will be returned
+    data = {"success": False}
 
-  # ensure an image was properly uploaded to our endpoint
-  if request.method == "POST":
-    if request.files.get("image"):
-      # read image file string data
-      file = request.files["image"].read()
-      
-      #convert string data to numpy array
-      np_image = np.fromstring(file, np.uint8)
+    # ensure an image was properly uploaded to our endpoint
+    if request.method == "POST":
+      if request.files.get("image"):
+        # read image file string data
+        file = request.files["image"].read()
 
-      # preprocess the image and prepare it for classification
-      image = prepare_image(np_image, target=(150, 150))
-      
-#      model, graph = load_model()
+        #convert string data to numpy array
+        np_image = np.fromstring(file, np.uint8)
 
-      # classify the input image   
-      with graph.as_default():
-        preds = model.predict(image, verbose=1)
-        data["predictions"] = str(preds[0][0])
+        # preprocess the image and prepare it for classification
+        image = prepare_image(np_image, target=(150, 150))
 
-      # indicate that the request was a success
-      data["success"] = True
+  #      model, graph = load_model()
 
-  # return the data dictionary as a JSON response
-  return jsonify(data)
+        # classify the input image   
+        with graph.as_default():
+          preds = model.predict(image, verbose=1)
+          data["predictions"] = str(preds[0][0])
 
+        # indicate that the request was a success
+        data["success"] = True
 
+    # return the data dictionary as a JSON response
+    return jsonify(data)
+  
+  return app
+  
+  
 # if this is the main thread of execution first load the model and
 # then start the server
 if __name__ == "__main__":
@@ -132,6 +137,7 @@ if __name__ == "__main__":
         "please wait until server has fully started"))
     load_model() 
     port = int(os.environ.get('PORT', 5000))
+    app = create_app()
     app.run(host='0.0.0.0', port=port)
 
 
