@@ -15,8 +15,9 @@ from keras.applications import ResNet50
 from keras.models import model_from_json
 from keras.utils import CustomObjectScope
 
-# custom metrics
-def precision(y_true, y_pred):
+def create_app():
+  # custom metrics
+  def precision(y_true, y_pred):
   """Precision metric.
 
   Only computes a batch-wise average of precision.
@@ -29,7 +30,7 @@ def precision(y_true, y_pred):
   precision = true_positives / (predicted_positives + K.epsilon())
   return precision
 
-def recall(y_true, y_pred):
+  def recall(y_true, y_pred):
   """Recall metric.
 
   Only computes a batch-wise average of recall.
@@ -42,7 +43,7 @@ def recall(y_true, y_pred):
   recall = true_positives / (possible_positives + K.epsilon())
   return recall
 
-def f1(y_true, y_pred):
+  def f1(y_true, y_pred):
   def recall(y_true, y_pred):
       """Recall metric.
 
@@ -72,30 +73,28 @@ def f1(y_true, y_pred):
   recall = recall(y_true, y_pred)
   return 2*((precision*recall)/(precision+recall+K.epsilon()))
 
+  # load our model 
+  def load_model():
+    global model, graph
+    with CustomObjectScope({'recall': recall, 'precision':precision,'f1':f1}): 
+      model = keras.models.load_model('modelV2.h5')
+    graph = tf.get_default_graph()
 
 
-# load our model 
-def load_model():
-  global model, graph
-  with CustomObjectScope({'recall': recall, 'precision':precision,'f1':f1}): 
-    model = keras.models.load_model('modelV2.h5')
+  def prepare_image(image, target):
+    # convert numpy array to image
+    image = cv.imdecode(image, cv.IMREAD_GRAYSCALE)
+    image = cv.resize(image,target)
+    image = image/255.0
+    image = image.reshape(1,150,150,-1)
+    return image
+  
+  load_model()
 
-  graph = tf.get_default_graph()
+  app = Flask(__name__)
 
-
-def prepare_image(image, target):
-  # convert numpy array to image
-  image = cv.imdecode(image, cv.IMREAD_GRAYSCALE)
-  image = cv.resize(image,target)
-  image = image/255.0
-  image = image.reshape(1,150,150,-1)
-
-  return image
-
-app = Flask(__name__)
-
-@app.route("/predict", methods=['GET', "POST"])
-def predict():
+  @app.route("/predict", methods=['GET', "POST"])
+  def predict():
   # initialize the data dictionary that will be returned
   data = {"success": False}
 
@@ -111,7 +110,7 @@ def predict():
       # preprocess the image and prepare it for classification
       image = prepare_image(np_image, target=(150, 150))
 
-#      model, graph = load_model()
+  #      model, graph = load_model()
 
       # classify the input image   
       with graph.as_default():
@@ -123,6 +122,7 @@ def predict():
 
   # return the data dictionary as a JSON response
   return jsonify(data)
+return app
 
 # if this is the main thread of execution first load the model and
 # then start the server
