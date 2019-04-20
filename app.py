@@ -18,60 +18,60 @@ from keras.utils import CustomObjectScope
 def create_app():
   # custom metrics
   def precision(y_true, y_pred):
-    """Precision metric.
+  """Precision metric.
 
-    Only computes a batch-wise average of precision.
+  Only computes a batch-wise average of precision.
 
-    Computes the precision, a metric for multi-label classification of
-    how many selected items are relevant.
-    """
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-    precision = true_positives / (predicted_positives + K.epsilon())
-    return precision
+  Computes the precision, a metric for multi-label classification of
+  how many selected items are relevant.
+  """
+  true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+  predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+  precision = true_positives / (predicted_positives + K.epsilon())
+  return precision
 
   def recall(y_true, y_pred):
-    """Recall metric.
+  """Recall metric.
 
-    Only computes a batch-wise average of recall.
+  Only computes a batch-wise average of recall.
 
-    Computes the recall, a metric for multi-label classification of
-    how many relevant items are selected.
-    """
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-    recall = true_positives / (possible_positives + K.epsilon())
-    return recall
+  Computes the recall, a metric for multi-label classification of
+  how many relevant items are selected.
+  """
+  true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+  possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+  recall = true_positives / (possible_positives + K.epsilon())
+  return recall
 
   def f1(y_true, y_pred):
-    def recall(y_true, y_pred):
-        """Recall metric.
+  def recall(y_true, y_pred):
+      """Recall metric.
 
-        Only computes a batch-wise average of recall.
+      Only computes a batch-wise average of recall.
 
-        Computes the recall, a metric for multi-label classification of
-        how many relevant items are selected.
-        """
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-        recall = true_positives / (possible_positives + K.epsilon())
-        return recall
+      Computes the recall, a metric for multi-label classification of
+      how many relevant items are selected.
+      """
+      true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+      possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+      recall = true_positives / (possible_positives + K.epsilon())
+      return recall
 
-    def precision(y_true, y_pred):
-        """Precision metric.
+  def precision(y_true, y_pred):
+      """Precision metric.
 
-        Only computes a batch-wise average of precision.
+      Only computes a batch-wise average of precision.
 
-        Computes the precision, a metric for multi-label classification of
-        how many selected items are relevant.
-        """
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-        precision = true_positives / (predicted_positives + K.epsilon())
-        return precision
-    precision = precision(y_true, y_pred)
-    recall = recall(y_true, y_pred)
-    return 2*((precision*recall)/(precision+recall+K.epsilon()))
+      Computes the precision, a metric for multi-label classification of
+      how many selected items are relevant.
+      """
+      true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+      predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+      precision = true_positives / (predicted_positives + K.epsilon())
+      return precision
+  precision = precision(y_true, y_pred)
+  recall = recall(y_true, y_pred)
+  return 2*((precision*recall)/(precision+recall+K.epsilon()))
 
   # load our model 
   def load_model():
@@ -95,33 +95,33 @@ def create_app():
 
   @app.route("/predict", methods=['GET', "POST"])
   def predict():
-    # initialize the data dictionary that will be returned
-    data = {"success": False}
+  # initialize the data dictionary that will be returned
+  data = {"success": False}
 
-    # ensure an image was properly uploaded to our endpoint
-    if request.method == "POST":
-      if request.files.get("image"):
-        # read image file string data
-        file = request.files["image"].read()
+  # ensure an image was properly uploaded to our endpoint
+  if request.method == "POST":
+    if request.files.get("image"):
+      # read image file string data
+      file = request.files["image"].read()
 
-        #convert string data to numpy array
-        np_image = np.fromstring(file, np.uint8)
+      #convert string data to numpy array
+      np_image = np.fromstring(file, np.uint8)
 
-        # preprocess the image and prepare it for classification
-        image = prepare_image(np_image, target=(150, 150))
+      # preprocess the image and prepare it for classification
+      image = prepare_image(np_image, target=(150, 150))
 
-    #      model, graph = load_model()
+  #      model, graph = load_model()
 
-        # classify the input image   
-        with graph.as_default():
-          preds = model.predict(image, verbose=1)
-          data["predictions"] = str(preds[0][0])
+      # classify the input image   
+      with graph.as_default():
+        preds = model.predict(image, verbose=1)
+        data["predictions"] = str(preds[0][0])
 
-        # indicate that the request was a success
-        data["success"] = True
+      # indicate that the request was a success
+      data["success"] = True
 
-    # return the data dictionary as a JSON response
-    return jsonify(data)
+  # return the data dictionary as a JSON response
+  return jsonify(data)
 return app
 
 # if this is the main thread of execution first load the model and
