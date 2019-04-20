@@ -15,6 +15,7 @@ from keras.applications import ResNet50
 from keras.models import model_from_json
 from keras.utils import CustomObjectScope
 
+global model, graph
 
 # custom metrics
 def precision(y_true, y_pred):
@@ -77,15 +78,12 @@ def f1(y_true, y_pred):
 
 # load our model 
 def load_model():
-  global model, graph
   
   with CustomObjectScope({'recall': recall, 'precision':precision,'f1':f1}): 
     model = keras.models.load_model('modelV2.h5')
 
   graph = tf.get_default_graph()
   
-  return model, graph
-
 
 def prepare_image(image, target):
   # convert numpy array to image
@@ -115,7 +113,7 @@ def predict():
       # preprocess the image and prepare it for classification
       image = prepare_image(np_image, target=(150, 150))
       
-      model, graph = load_model()
+#      model, graph = load_model()
 
       # classify the input image   
       with graph.as_default():
@@ -134,7 +132,7 @@ def predict():
 if __name__ == "__main__":
     print(("* Loading Keras model and Flask starting server..."
         "please wait until server has fully started"))
-#    load_model() 
+    load_model() 
 #    app.debug =True
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
