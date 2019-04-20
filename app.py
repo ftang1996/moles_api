@@ -128,15 +128,13 @@ def predict():
 
 # if this is the main thread of execution first load the model and
 # then start the server
-if __name__ == "__main__":
-    
-    
-    print(("* Loading Keras model and Flask starting server..."
-        "please wait until server has fully started"))
-    load_model() 
+#if __name__ == "__main__":
+print(("* Loading Keras model and Flask starting server..."
+    "please wait until server has fully started"))
+load_model() 
 #    app.debug =True
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+port = int(os.environ.get('PORT', 5000))
+app.run(host='0.0.0.0', port=port)
 
 
 
